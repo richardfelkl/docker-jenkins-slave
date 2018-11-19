@@ -6,6 +6,7 @@ USER root
 ENV GOPATH "/home/jenkins/go"
 ENV GOBIN "/home/jenkins/go/bin"
 ENV GLIDE_HOME "/home/glide"
+ENV PATH="${GOPATH}:${PATH}"
 
 ADD https://storage.googleapis.com/kubernetes-release/release/v1.6.4/bin/linux/amd64/kubectl /usr/local/bin/kubectl
 
@@ -21,7 +22,22 @@ RUN apk update && \
 RUN sed -i -e 's/v[3.8]\.[3.8]/edge/g' /etc/apk/repositories
 
 RUN apk update && \
-    apk add go glide dep
+    apk add go glide dep protobuf
+
+RUN go get -u github.com/gogo/protobuf/proto && \
+    go get -u github.com/gogo/protobuf/gogoproto && \
+    go get -u github.com/grpc-ecosystem/grpc-gateway/protoc-gen-grpc-gateway && \
+    go get -u github.com/grpc-ecosystem/grpc-gateway/protoc-gen-swagger && \
+    go get -u github.com/golang/protobuf/protoc-gen-go && \
+    go get -u github.com/dan-compton/grpc-gateway-cors/...
+
+RUN go get -u github.com/infobloxopen/protoc-gen-gorm; exit 0
+
+RUN cd ${GOPATH}/src/github.com/gogo/protobuf/ && \
+    make install && \
+    cd ${GOPATH}/src/github.com/infobloxopen/protoc-gen-gorm && \
+    make vendor && \
+    make install
 
 COPY jenkins-slave /usr/local/bin/jenkins-slave
 
